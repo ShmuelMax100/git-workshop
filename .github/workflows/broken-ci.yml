@@ -1,0 +1,50 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# broken-ci.yml — INTENTIONALLY BROKEN (Scenario 3 — Debugging exercise)
+#
+# This workflow contains THREE deliberate mistakes.
+# Participants must read the logs, identify each bug, and fix it.
+#
+# Bug list (do NOT share with participants before they try):
+#   BUG 1 — Wrong install command: `npm install` instead of `npm ci`
+#            (minor, won't break today but is bad practice)
+#   BUG 2 — Typo in test script: `npm run tset` instead of `npm run test`
+#   BUG 3 — Artifact path does not exist: `reports/` is never created
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Broken CI (Debug Me)
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      # BUG 1: Should be `npm ci` for reproducible installs in CI
+      - name: Install dependencies
+        run: npm install
+
+      # BUG 2: Typo — `tset` is not a script. Should be `npm run test`
+      - name: Run tests
+        run: npm run tset
+
+      # BUG 3: `reports/` directory does not exist — this step will fail with
+      #         "No files were found with the provided path"
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: reports/

@@ -1,0 +1,48 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# broken-ci-fixed.yml — SOLUTION for Scenario 3
+#
+# All three bugs from broken-ci.yml are fixed here.
+# Show this to participants AFTER they have found the bugs themselves.
+#
+# Changes vs broken-ci.yml:
+#   BUG 1 FIX → `npm ci` (was: `npm install`)
+#   BUG 2 FIX → `npm run test` (was: `npm run tset`)
+#   BUG 3 FIX → artifact path is `coverage/` (was: `reports/`)
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Broken CI (Fixed)
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      # FIX 1: npm ci for reproducible CI installs
+      - name: Install dependencies
+        run: npm ci
+
+      # FIX 2: correct script name
+      - name: Run tests
+        run: npm run test
+
+      # FIX 3: Jest writes to coverage/, not reports/
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: coverage/

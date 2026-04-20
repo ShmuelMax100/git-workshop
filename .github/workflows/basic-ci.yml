@@ -1,0 +1,58 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# basic-ci.yml — WORKING workflow (Scenario 1 & 2)
+#
+# Purpose:
+#   The standard pull-request pipeline. Install deps → run tests → upload
+#   coverage. Participants see this turn red when the buggy multiply() test
+#   fires, then green once they fix the code.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Basic CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  # Allow manual runs from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run Tests (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      # 1. Check out the code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set the correct Node version
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      # 3. Install dependencies (uses package-lock.json for reproducibility)
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. Run the test suite with coverage enabled
+      - name: Run tests with coverage
+        run: npm run test:ci
+
+      # 5. Upload coverage report so it appears under the workflow run's
+      #    Artifacts section — participants can download and inspect it
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        # Always upload, even when tests fail, so the report is available
+        if: always()
+        with:
+          name: coverage-report-node-${{ matrix.node-version }}
+          path: coverage/
+          retention-days: 7
